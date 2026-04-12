@@ -3,18 +3,22 @@ SD/FAST open source code
 
 ## WORK IN PROGRESS
 
-SD/FAST is a symbolic multibody dynamics code developed by Dan Rosenthal and Michael Sherman (Sherm)
-at Symbolic Dynamics Inc. in the late 1980s and early 1990s. 
+SD/FAST is a symbolic multibody dynamics code developed by Dan Rosenthal, Michael Hollars,
+and Michael Sherman (Sherm) at Symbolic Dynamics Inc. in the 1990s. 
 
 SD/FAST was acquired by PTC (formerly Parametric Technology Corp.) and sold by PTC until 2025. 
 PTC has generously contributed it to open source in 2026, in exchange for Sherm's promise to
 create the open source organization on GitHub and get the code working again with no need for
-security keys or paying money! The license is Apache 2.0 which is the most permissive open
-source license (even better than BSD or MIT in some ways).
+security keys or paying money! The license is Apache 2.0 which is the most permissive
+(non-viral) open source license (even better than BSD or MIT in some ways).
 
 Please use the GitHub Discussion feature for questions, or file Issues if you have requests or
 find problems. Pull requests would be greatly appreciated if you fix problems or want to make
 updates.
+
+### Note from Sherm 20260412
+
+Thanks to @esba1ley for adding Mac support and @DonyDominic for a first crack at CI.
 
 ### Note from Sherm 20260119
 
