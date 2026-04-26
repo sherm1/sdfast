@@ -331,7 +331,7 @@ void sdgetitj(int joint, sdreal_t itj[3]);
 void sdgetpin(int joint, int pinno, sdreal_t pin[3]);
 
 /* Get prescribed motion status of a joint axis. */
-void sdgetpres(int joint, int axis, int *pession);
+void sdgetpres(int joint, int axis, int *presout);
 
 /* ========================================================================
  * PRESCRIBED MOTION
