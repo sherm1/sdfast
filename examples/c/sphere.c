@@ -118,9 +118,9 @@
  *   SLIPPING    ROLLING     Relative slip velocity drops below EPS_MINSLIPVEL,
  *                             and is decreasing.
  */
-
-#include <stdio.h>
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 /* Sphere radii. */
 #define R_INNER   1.
