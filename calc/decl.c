@@ -150,7 +150,7 @@ type:
 VT_INTEGER, name
 VT_REAL, name
 VT_TYPENAME, typename, name
-VT_PROCNAME, name,    
+VT_PROCNAME, name, prototype
 VT_INTEGER|VT_ARRAY, name {,dimension} ... , 0        int array, VT_BYREF implied
 VT_ARRAY, name {,dimension} ... , 0                real array, VT_BYREF implied
 These array types take array dimensions as strings rather than numbers:
@@ -220,7 +220,7 @@ packvar(unsigned vtype, ...)
 
     pvar = (packedvar_t *)malloc(sizeof(packedvar_t));
     pvar->pv_flags = vtype;
-    pvar->pv_name = pvar->pv_typename = NULL;
+    pvar->pv_name = pvar->pv_typename = pvar->pv_prototype = NULL;
     pvar->pv_cond = 0;
     pvar->pv_sym = NULL;
     pvar->pv_usertype = NULL;
@@ -245,6 +245,9 @@ packvar(unsigned vtype, ...)
         pvar->pv_typename = va_arg(argptr, char *);
 
     pvar->pv_name = va_arg(argptr, char *);
+
+    if ((vtype & VT_BASETYPE) == VT_PROCNAME)
+        pvar->pv_prototype = va_arg(argptr, char *);
 
     if (vtype & VT_ARRAY) {
         uintptr_t *dimp = pvar->pv_dimu.ut_dim;
@@ -311,6 +314,15 @@ VARNAME(va_list     *argptr,
         packedvar_t *pvar)
 {
     return decl_flags & DECL_PACKED ? pvar->pv_name
+                                    : va_arg(*argptr, char*);
+}
+
+static char*
+VARPROTOTYPE(va_list     *argptr,
+             unsigned    decl_flags,
+             packedvar_t *pvar)
+{
+    return decl_flags & DECL_PACKED ? pvar->pv_prototype
                                     : va_arg(*argptr, char*);
 }
 
@@ -546,7 +558,7 @@ DECL_NOPRINT        with this flag, we define the user type but produce no
 
 VT_INTEGER, name
 VT_REAL, name
-VT_PROCNAME, name
+VT_PROCNAME, name, prototype
 VT_INTEGER|VT_ARRAY, name {,dimension} ... , 0        int array, VT_BYREF implied
 VT_ARRAY, name {,dimension} ... , 0                real array, VT_BYREF implied
 VT_INTEGER|VT_SARRAY, name {,dimension} ... , NULL  int array, VT_BYREF implied
@@ -590,6 +602,8 @@ declare_type(FILE *F, unsigned decl_flags, ...)
                 continue;
             }
             user_type->name = va_arg(argptr, char *);
+            if ((user_type->type & VT_BASETYPE) == VT_PROCNAME)
+                (void) va_arg(argptr, char *);  /* past prototype */
             get_dims(user_type->type, &user_type->dimu, &argptr, PVNULL, 0);
             user_type->type |= VT_ISUSER;
         } 
@@ -652,7 +666,9 @@ do_declare_vars1(FILE            *F,
     static unsigned last_vtype;
     static int skip, first_name;
     static char *vname;
+    static char *last_prototype;
     static dim_t dimu;
+    char *prototype;
     uintptr_t *dimp;
     char **sdimp;
     struct user_type *user_type;
@@ -751,6 +767,14 @@ do_declare_vars1(FILE            *F,
         }
 
         vname = VARNAME(&*argptr, decl_flags, pvar);
+        prototype = NULL;
+        if ((vtype & VT_BASETYPE) == VT_PROCNAME) {
+            prototype = VARPROTOTYPE(&*argptr, decl_flags, pvar);
+            last_prototype = prototype;
+        } else if ((vtype & VT_BASETYPE) == VT_DUP &&
+                   (last_vtype & VT_BASETYPE) == VT_PROCNAME) {
+            prototype = last_prototype;
+        }
         if ((decl_flags & DECL_NUMSUFFIX) && vname) {
             esprintf(tmpvname, "%@s%@d", vname, num_suffix);
             vname = tmpvname;
@@ -814,7 +838,8 @@ do_declare_vars1(FILE            *F,
                 } else {
                     if ((Lang->flags & LANG_C_FAMILY) &&
                            (vtype & VT_BASETYPE) == VT_PROCNAME)
-                        efprintf(F, "(*%s)()", vname);
+                        efprintf(F, "(*%s)(%s)", vname,
+                                 prototype ? prototype : "");
                     else
                         efprintf(F, "%s%s", vtype & VT_BYREF ? Lang->deref : "",
                           vname);
@@ -948,6 +973,8 @@ do_declare_vars2(FILE        *F,
             first_name = 1;
         }
         vname = VARNAME(&*argptr, decl_flags, pvar);
+        if ((next_vtype & VT_BASETYPE) == VT_PROCNAME)
+            (void) VARPROTOTYPE(&*argptr, decl_flags, pvar);
         if (decl_flags & DECL_NUMSUFFIX && vname) {
             esprintf(tmpvname, "%@s%@d", vname, num_suffix);
             vname = tmpvname;
@@ -1129,6 +1156,9 @@ skip_decl(unsigned    vtype,
         (void) va_arg(*argptr, char *);
 
     name = va_arg(*argptr, char *);
+
+    if ((vtype & VT_BASETYPE) == VT_PROCNAME)
+        (void) va_arg(*argptr, char *);        /* past prototype */
 
     if (vtype & VT_ARRAY)
         while (va_arg(*argptr, unsigned));        /* past dimensions */
